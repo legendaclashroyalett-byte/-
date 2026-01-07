@@ -26,7 +26,20 @@ dp = Dispatcher()
 products = {
     "1": {"name": "Буст Андроид", "price": 40, "link": "https://telegra.ph/Optimizaciya-bust-FPS-ANDROID-05-22"},
     "2": {"name": "Буст IOS", "price": 40, "link": "https://telegra.ph/Optimizaciya-bust-FPS-IPHONE-05-22"},
-    "3": {"name": "Буст ПК", "price": 100, "link": "https://telegra.ph/Povyshenie-FPS-Vo-Vseh-Igrah-05-06"}
+    "3": {"name": "Буст ПК", "price": 100, "link": "https://telegra.ph/Povyshenie-FPS-Vo-Vseh-Igrah-05-06"},
+    "4": {"name": "Все приложения от Adobe", "price": 20, "link": "https://telegra.ph/Vse-prilozheniya-ot-Adobe-12-21"},
+    "5": {"name": "Накрутка Часов в Steam + Достижения", "price": 50, "link": "https://docs.google.com/document/d/1dGeuBe0JXkmkg07qD41mB5g_ZSUIpXxmLZ1d1eBK9e4/edit?usp=sharing"},
+    "6": {"name": "Отдача в PUBG MOBILE", "price": 40, "link": "https://docs.google.com/document/d/1sO04gtjn0vpzs2nTchc0rVHIA495WHY-5U70bDT56GE/edit?usp=drivesdk"},
+    "7": {"name": "59 способов фармить валюту на funtime", "price": 25, "link": "https://telegra.ph/59-sposobov-zarabotka-Funtime-03-01"},
+    "8": {"name": "Способы получения 7 значков в Discord", "price": 40, "link": "https://telegra.ph/SPOSOBY-POLUCHENIYA-7-ZNACHKOV-V-DISCORD-02-15"},
+    "9": {"name": "Как распиарить свой Discord", "price": 30, "link": "https://telegra.ph/Kak-raspiarit-svoj-diskord-server-03-01"},
+    "10": {"name": "Смена голоса в реальном времени", "price": 30, "link": "https://telegra.ph/Smena-golosa-v-realnom-vremeni-05-18"},
+    "11": {"name": "Как сделать невидимый ник в Brawl Stars", "price": 50, "link": "https://telegra.ph/%D0%9Aak-sdelat-nevidimyj-nik-v-Brawl-Stars-i-drugih-igrah-05-18"},
+    "12": {"name": "Гайд без ВПН и лагов в Brawl Stars", "price": 40, "link": "https://telegra.ph/Gajd-kak-igrat-bez-VPN-i-lagov-v-Brawl-Stars-05-18"},
+    "13": {"name": "Написать в поддержку Supercell РФ/РБ", "price": 20, "link": "https://telegra.ph/Support-Supercell-RF-RB-05-18"},
+    "14": {"name": "Сборка модов на BeamNG.Drive", "price": 30, "link": "https://disk.yandex.ru/d/tjLjXo2fZnt-fA"},
+    "15": {"name": "Сборка модов 2.0 на BeamNG.Drive", "price": 30, "link": "https://disk.yandex.ru/d/XSwnu4b0CCOhrQ"},
+    "16": {"name": "99к игр STEAM", "price": 500, "link": "https://telegra.ph/Steam-05-22-24"}
 }
 
 # --- Главное меню ---
@@ -95,7 +108,7 @@ async def buy(callback: types.CallbackQuery):
     await callback.message.answer(
         f"Вы выбрали: {product['name']}\n"
         f"Цена: {product['price']}⭐\n\n"
-        f"Вот ваш товар: {product['link']}"
+        f"Вот ваш товар:\n{product['link']}"
     )
 
 # --- Запуск бота ---
