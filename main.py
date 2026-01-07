@@ -1,5 +1,4 @@
-import logging
-from aiogram import Bot, Dispatcher
+m import Bot, Dispatcher
 from aiogram.types import Message
 from aiogram.filters import Command, Text
 from aiogram.utils import executor
@@ -65,3 +64,4 @@ async def cancel_purchase(message: Message):
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
+
