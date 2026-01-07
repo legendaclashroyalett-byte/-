@@ -6,7 +6,6 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LabeledPri
 from flask import Flask
 from threading import Thread
 
-# Мини-сервер для UptimeRobot
 app = Flask('')
 
 @app.route('/')
@@ -19,14 +18,14 @@ def run():
 t = Thread(target=run)
 t.start()
 
-# Токен берём из Replit Secrets
+# Токен берём из переменной окружения
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
 if not TOKEN:
     print("Error: TELEGRAM_BOT_TOKEN environment variable is not set")
     exit(1)
 
-# Каталог товаров
+# Все товары
 products = {
     "1": {"name": "Буст Андроид", "price": 40, "link": "https://telegra.ph/Optimizaciya-bust-FPS-ANDROID-05-22"},
     "2": {"name": "Буст IOS", "price": 40, "link": "https://telegra.ph/Optimizaciya-bust-FPS-IPHONE-05-22"},
@@ -85,12 +84,22 @@ async def catalog(callback: types.CallbackQuery):
         reply_markup=catalog_menu()
     )
 
-# Информация
+# Назад в главное меню
+@dp.callback_query(lambda c: c.data == "back")
+async def back(callback: types.CallbackQuery):
+    await callback.message.answer(
+        "Главное меню:",
+        reply_markup=main_menu()
+    )
+
+# Информация с твоим ЛС и каналом
 @dp.callback_query(lambda c: c.data == "info")
 async def info(callback: types.CallbackQuery):
     await callback.message.answer(
         "ℹ️ Оплата происходит через Telegram Stars.\n"
-        "После оплаты товар приходит автоматически."
+        "После оплаты товар приходит автоматически.\n\n"
+        "💬 Поддержка: https://t.me/BussinesBrain\n"
+        "📢 Канал: https://t.me/Business_W_ideas"
     )
 
 # Покупка товара
@@ -127,5 +136,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
 
 
