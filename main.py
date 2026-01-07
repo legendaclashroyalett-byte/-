@@ -1,8 +1,7 @@
 import asyncio
-import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command, Text
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LabeledPrice
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from flask import Flask
 from threading import Thread
 
@@ -20,6 +19,7 @@ t = Thread(target=run)
 t.start()
 
 # --- Токен бота из переменных окружения ---
+import os
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 if not TOKEN:
     print("Error: TELEGRAM_BOT_TOKEN environment variable is not set")
@@ -28,13 +28,15 @@ if not TOKEN:
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+# --- Балансы пользователей ---
+user_stars = {}  # {user_id: количество звезд}
+
 # --- Словарь товаров ---
 products = {
     "1": {"name": "Буст Андроид", "price": 40, "link": "https://telegra.ph/Optimizaciya-bust-FPS-ANDROID-05-22"},
     "2": {"name": "Буст IOS", "price": 40, "link": "https://telegra.ph/Optimizaciya-bust-FPS-IPHONE-05-22"},
     "3": {"name": "Буст ПК", "price": 100, "link": "https://telegra.ph/Povyshenie-FPS-Vo-Vseh-Igrah-05-06"},
-    "4": {"name": "Все приложения от Adobe", "price": 20, "link": "https://telegra.ph/Vse-prilozheniya-ot-Adobe-12-21"}
-    # Добавь остальные товары по аналогии
+    # добавляй остальные товары по такому же принципу
 }
 
 # --- Главное меню ---
@@ -58,9 +60,9 @@ def catalog_menu():
 # --- Стартовый хендлер ---
 @dp.message(Command("start"))
 async def start(message: types.Message):
+    user_stars.setdefault(message.from_user.id, 100)  # каждый новый юзер получает 100⭐
     await message.answer(
-        "👋 Добро пожаловать!\n\n"
-        "Здесь вы можете купить цифровые товары за Telegram ⭐️\n\n"
+        f"👋 Добро пожаловать!\nУ вас {user_stars[message.from_user.id]}⭐\n\n"
         "Выберите действие 👇",
         reply_markup=main_menu()
     )
@@ -69,7 +71,7 @@ async def start(message: types.Message):
 @dp.callback_query(Text("catalog"))
 async def catalog(callback: types.CallbackQuery):
     await callback.message.answer(
-        "🛍 Каталог товаров:",
+        f"🛍 Каталог товаров:\nУ вас {user_stars.get(callback.from_user.id,0)}⭐",
         reply_markup=catalog_menu()
     )
 
@@ -77,7 +79,7 @@ async def catalog(callback: types.CallbackQuery):
 @dp.callback_query(Text("back"))
 async def back(callback: types.CallbackQuery):
     await callback.message.answer(
-        "Вы вернулись в главное меню 👇",
+        f"Вы вернулись в главное меню 👇\nУ вас {user_stars.get(callback.from_user.id,0)}⭐",
         reply_markup=main_menu()
     )
 
@@ -88,11 +90,11 @@ async def info(callback: types.CallbackQuery):
         "ℹ️ Информация:\n\n"
         "💌 Поддержка: @BussinesBrain\n"
         "📢 Канал: @Business_W_ideas\n\n"
-        "Оплата товаров осуществляется через Telegram Stars"
+        "Покупка товаров осуществляется за Telegram ⭐"
     )
 
-# --- Покупка товаров за Stars ---
-@dp.callback_query(lambda c: c.data.startswith("buy_"))
+# --- Покупка товаров за звезды ---
+@dp.callback_query(Text(startswith="buy_"))
 async def buy(callback: types.CallbackQuery):
     pid = callback.data.split("_")[1]
     product = products.get(pid)
@@ -100,27 +102,20 @@ async def buy(callback: types.CallbackQuery):
         await callback.message.answer("❌ Товар не найден")
         return
 
-    prices = [LabeledPrice(label=product['name'], amount=product['price'])]
-    await bot.send_invoice(
-        callback.from_user.id,
-        title=product['name'],
-        description="Цифровой товар",
-        payload=pid,
-        currency="XTR",
-        prices=prices
+    user_id = callback.from_user.id
+    user_balance = user_stars.get(user_id, 0)
+    if user_balance < product['price']:
+        await callback.message.answer(f"❌ У вас недостаточно ⭐. У вас {user_balance}⭐")
+        return
+
+    # списываем звёзды
+    user_stars[user_id] -= product['price']
+
+    await callback.message.answer(
+        f"✅ Вы купили {product['name']} за {product['price']}⭐!\n"
+        f"Ваш текущий баланс: {user_stars[user_id]}⭐\n\n"
+        f"Вот ваш товар: {product['link']}"
     )
-
-# --- Предоплата ---
-@dp.pre_checkout_query()
-async def checkout(q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(q.id, ok=True)
-
-# --- Успешная оплата ---
-@dp.message(lambda m: m.successful_payment)
-async def success(msg: types.Message):
-    pid = msg.successful_payment.invoice_payload
-    link = products[pid]['link']
-    await msg.answer(f"✅ Оплата успешна!\n\nВот ваш товар:\n{link}")
 
 # --- Запуск бота ---
 async def main():
