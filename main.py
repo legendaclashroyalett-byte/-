@@ -6,6 +6,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LabeledPri
 from flask import Flask
 from threading import Thread
 
+# Flask для аптайма
 app = Flask('')
 
 @app.route('/')
@@ -18,7 +19,7 @@ def run():
 t = Thread(target=run)
 t.start()
 
-# Токен берём из переменной окружения
+# Токен бота из переменной окружения
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 
 if not TOKEN:
@@ -79,27 +80,30 @@ async def start(message: types.Message):
 # Каталог
 @dp.callback_query(lambda c: c.data == "catalog")
 async def catalog(callback: types.CallbackQuery):
-    await callback.message.answer(
+    await callback.message.edit_text(
         "🛍 Каталог товаров:",
         reply_markup=catalog_menu()
     )
 
-# Назад в главное меню
-@dp.callback_query(lambda c: c.data == "back")
-async def back(callback: types.CallbackQuery):
-    await callback.message.answer(
-        "Главное меню:",
-        reply_markup=main_menu()
-    )
-
-# Информация с твоим ЛС и каналом
+# Информация с ЛС и каналом
 @dp.callback_query(lambda c: c.data == "info")
 async def info(callback: types.CallbackQuery):
-    await callback.message.answer(
-        "ℹ️ Оплата происходит через Telegram Stars.\n"
-        "После оплаты товар приходит автоматически.\n\n"
-        "💬 Поддержка: https://t.me/BussinesBrain\n"
-        "📢 Канал: https://t.me/Business_W_ideas"
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💬 ЛС поддержки", url="https://t.me/BussinesBrain")],
+        [InlineKeyboardButton(text="📢 Канал с идеями", url="https://t.me/Business_W_ideas")],
+        [InlineKeyboardButton(text="⬅ Назад", callback_data="back")]
+    ])
+    await callback.message.edit_text(
+        "ℹ️ Здесь вы можете связаться с поддержкой и посмотреть канал с идеями:",
+        reply_markup=keyboard
+    )
+
+# Кнопка назад
+@dp.callback_query(lambda c: c.data == "back")
+async def back(callback: types.CallbackQuery):
+    await callback.message.edit_text(
+        "👋 Главное меню. Выберите действие 👇",
+        reply_markup=main_menu()
     )
 
 # Покупка товара
@@ -136,7 +140,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
-
