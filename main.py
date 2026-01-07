@@ -2,8 +2,8 @@ import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command, Text
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from flask import Flask
 from threading import Thread
+from flask import Flask
 
 # --- Flask для проверки работы бота онлайн ---
 app = Flask('')
@@ -15,28 +15,18 @@ def home():
 def run():
     app.run(host="0.0.0.0", port=8080)
 
-t = Thread(target=run)
-t.start()
+Thread(target=run).start()
 
-# --- Токен бота из переменных окружения ---
-import os
-TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-if not TOKEN:
-    print("Error: TELEGRAM_BOT_TOKEN environment variable is not set")
-    exit(1)
-
+# --- Токен бота ---
+TOKEN = "8512796088:AAGA4zGQJ_sS2QOs6Xv2AyHETxwjGyO0ZYA"
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
-
-# --- Балансы пользователей ---
-user_stars = {}  # {user_id: количество звезд}
 
 # --- Словарь товаров ---
 products = {
     "1": {"name": "Буст Андроид", "price": 40, "link": "https://telegra.ph/Optimizaciya-bust-FPS-ANDROID-05-22"},
     "2": {"name": "Буст IOS", "price": 40, "link": "https://telegra.ph/Optimizaciya-bust-FPS-IPHONE-05-22"},
-    "3": {"name": "Буст ПК", "price": 100, "link": "https://telegra.ph/Povyshenie-FPS-Vo-Vseh-Igrah-05-06"},
-    # добавляй остальные товары по такому же принципу
+    "3": {"name": "Буст ПК", "price": 100, "link": "https://telegra.ph/Povyshenie-FPS-Vo-Vseh-Igrah-05-06"}
 }
 
 # --- Главное меню ---
@@ -60,9 +50,9 @@ def catalog_menu():
 # --- Стартовый хендлер ---
 @dp.message(Command("start"))
 async def start(message: types.Message):
-    user_stars.setdefault(message.from_user.id, 100)  # каждый новый юзер получает 100⭐
     await message.answer(
-        f"👋 Добро пожаловать!\nУ вас {user_stars[message.from_user.id]}⭐\n\n"
+        "👋 Добро пожаловать!\n\n"
+        "Здесь вы можете купить цифровые товары за Telegram ⭐️\n\n"
         "Выберите действие 👇",
         reply_markup=main_menu()
     )
@@ -71,7 +61,7 @@ async def start(message: types.Message):
 @dp.callback_query(Text("catalog"))
 async def catalog(callback: types.CallbackQuery):
     await callback.message.answer(
-        f"🛍 Каталог товаров:\nУ вас {user_stars.get(callback.from_user.id,0)}⭐",
+        "🛍 Каталог товаров:",
         reply_markup=catalog_menu()
     )
 
@@ -79,7 +69,7 @@ async def catalog(callback: types.CallbackQuery):
 @dp.callback_query(Text("back"))
 async def back(callback: types.CallbackQuery):
     await callback.message.answer(
-        f"Вы вернулись в главное меню 👇\nУ вас {user_stars.get(callback.from_user.id,0)}⭐",
+        "Вы вернулись в главное меню 👇",
         reply_markup=main_menu()
     )
 
@@ -90,10 +80,10 @@ async def info(callback: types.CallbackQuery):
         "ℹ️ Информация:\n\n"
         "💌 Поддержка: @BussinesBrain\n"
         "📢 Канал: @Business_W_ideas\n\n"
-        "Покупка товаров осуществляется за Telegram ⭐"
+        "Оплата товаров осуществляется через Telegram Stars"
     )
 
-# --- Покупка товаров за звезды ---
+# --- Покупка товаров за ⭐ ---
 @dp.callback_query(Text(startswith="buy_"))
 async def buy(callback: types.CallbackQuery):
     pid = callback.data.split("_")[1]
@@ -102,18 +92,9 @@ async def buy(callback: types.CallbackQuery):
         await callback.message.answer("❌ Товар не найден")
         return
 
-    user_id = callback.from_user.id
-    user_balance = user_stars.get(user_id, 0)
-    if user_balance < product['price']:
-        await callback.message.answer(f"❌ У вас недостаточно ⭐. У вас {user_balance}⭐")
-        return
-
-    # списываем звёзды
-    user_stars[user_id] -= product['price']
-
     await callback.message.answer(
-        f"✅ Вы купили {product['name']} за {product['price']}⭐!\n"
-        f"Ваш текущий баланс: {user_stars[user_id]}⭐\n\n"
+        f"Вы выбрали: {product['name']}\n"
+        f"Цена: {product['price']}⭐\n\n"
         f"Вот ваш товар: {product['link']}"
     )
 
