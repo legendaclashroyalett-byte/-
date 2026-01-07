@@ -1,7 +1,7 @@
 import asyncio
 import os
 from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
+from aiogram.filters import Command, Text
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, LabeledPrice
 from flask import Flask
 from threading import Thread
@@ -16,11 +16,10 @@ def home():
 def run():
     app.run(host="0.0.0.0", port=8080)
 
-t = Thread(target=run)
-t.start()
+Thread(target=run).start()
 
 # --- Токен бота ---
-TOKEN = "8512796088:AAGA4zGQJ_sS2QOs6Xv2AyHETxwjGyO0ZYA"
+TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8512796088:AAGA4zGQJ_sS2QOs6Xv2AyHETxwjGyO0ZYA")
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
@@ -36,7 +35,7 @@ products = {
     "8": {"name": "Способы получения 7 значков в Discord", "price": 40, "link": "https://telegra.ph/SPOSOBY-POLUCHENIYA-7-ZNACHKOV-V-DISCORD-02-15"},
     "9": {"name": "Как распиарить свой Discord", "price": 30, "link": "https://telegra.ph/Kak-raspiarit-svoj-diskord-server-03-01"},
     "10": {"name": "Смена голоса в реальном времени", "price": 30, "link": "https://telegra.ph/Smena-golosa-v-realnom-vremeni-05-18"},
-    "11": {"name": "Как сделать невидимый ник в Brawl Stars", "price": 50, "link": "https://telegra.ph/Kak-sdelat-nevidimyj-nik-v-Brawl-Stars-i-drugih-igrah-05-18"},
+    "11": {"name": "Как сделать невидимый ник в Brawl Stars", "price": 50, "link": "https://telegra.ph/%D0%9Aak-sdelat-nevidimyj-nik-v-Brawl-Stars-i-drugih-igrah-05-18"},
     "12": {"name": "Гайд без ВПН и лагов в Brawl Stars", "price": 40, "link": "https://telegra.ph/Gajd-kak-igrat-bez-VPN-i-lagov-v-Brawl-Stars-05-18"},
     "13": {"name": "Написать в поддержку Supercell РФ/РБ", "price": 20, "link": "https://telegra.ph/Support-Supercell-RF-RB-05-18"},
     "14": {"name": "Сборка модов на BeamNG.Drive", "price": 30, "link": "https://disk.yandex.ru/d/tjLjXo2fZnt-fA"},
@@ -51,7 +50,7 @@ def main_menu():
         [InlineKeyboardButton(text="ℹ️ Информация", callback_data="info")]
     ])
 
-# --- Каталог товаров ---
+# --- Каталог ---
 def catalog_menu():
     keyboard = []
     for pid, p in products.items():
@@ -62,7 +61,7 @@ def catalog_menu():
     keyboard.append([InlineKeyboardButton(text="⬅ Назад", callback_data="back")])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
-# --- Хендлер команды /start ---
+# --- Хендлеры ---
 @dp.message(Command("start"))
 async def start(message: types.Message):
     await message.answer(
@@ -72,67 +71,55 @@ async def start(message: types.Message):
         reply_markup=main_menu()
     )
 
-# --- Каталог ---
-@dp.callback_query(lambda c: c.data == "catalog")
+@dp.callback_query(Text("catalog"))
 async def catalog(callback: types.CallbackQuery):
     await callback.message.answer(
-        "🛍 Каталог товаров:\n\nВыберите товар для покупки за ⭐️",
+        "🛍 Каталог товаров:",
         reply_markup=catalog_menu()
     )
 
-# --- Назад в главное меню ---
-@dp.callback_query(lambda c: c.data == "back")
+@dp.callback_query(Text("back"))
 async def back(callback: types.CallbackQuery):
     await callback.message.answer(
         "Вы вернулись в главное меню 👇",
         reply_markup=main_menu()
     )
 
-# --- Информация ---
-@dp.callback_query(lambda c: c.data == "info")
+@dp.callback_query(Text("info"))
 async def info(callback: types.CallbackQuery):
     await callback.message.answer(
         "ℹ️ Информация:\n\n"
         "💌 Поддержка: @BussinesBrain\n"
         "📢 Канал: @Business_W_ideas\n\n"
-        "Оплата товаров осуществляется через Telegram Stars.\n"
-        "Вы можете выбрать товар из каталога и оплатить его прямо в Telegram, получив доступ к ссылке после успешной оплаты."
+        "Оплата товаров осуществляется через Telegram Stars"
     )
 
-# --- Покупка товаров за Stars ---
-@dp.callback_query(lambda c: c.data.startswith("buy_"))
+@dp.callback_query(Text(startswith="buy_"))
 async def buy(callback: types.CallbackQuery):
     pid = callback.data.split("_")[1]
     product = products.get(pid)
     if not product:
         await callback.message.answer("❌ Товар не найден")
         return
-
     prices = [LabeledPrice(label=product['name'], amount=product['price'])]
     await bot.send_invoice(
         callback.from_user.id,
         title=product['name'],
-        description=f"Оплата товара: {product['name']} за ⭐",
+        description="Цифровой товар",
         payload=pid,
-        currency="XTR",  # Stars
+        currency="XTR",
         prices=prices
     )
 
-# --- Предоплата ---
 @dp.pre_checkout_query()
 async def checkout(q: types.PreCheckoutQuery):
     await bot.answer_pre_checkout_query(q.id, ok=True)
 
-# --- Успешная оплата ---
 @dp.message(lambda m: m.successful_payment)
 async def success(msg: types.Message):
     pid = msg.successful_payment.invoice_payload
     link = products[pid]['link']
-    await msg.answer(
-        f"✅ Оплата успешна!\n\nВот ваш товар:\n{link}\n\n"
-        "Спасибо за покупку! ⭐️\n\n"
-        "Чтобы вернуться в главное меню, нажмите /start"
-    )
+    await msg.answer(f"✅ Оплата успешна!\n\nВот ваш товар:\n{link}")
 
 # --- Запуск бота ---
 async def main():
@@ -140,4 +127,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
